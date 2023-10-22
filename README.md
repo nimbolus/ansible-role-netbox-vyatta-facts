@@ -1,10 +1,4 @@
-# Ansible Role - Netbox Vyatta Facts
-
-Ansible role to gather facts from Netbox for generating network device configurations. The facts are generic, but designed for the Vyatta configuration system (EdgeOS, VyOS).
-
-An example playbook and config template can be found at [./example](./example).
-
-Netbox Vyatta Facts
+Ansible Role - Netbox Vyatta Facts
 =========
 
 Ansible role to gather facts from Netbox for generating network device configurations. The facts are generic, but designed for the Vyatta configuration system (EdgeOS, VyOS).
