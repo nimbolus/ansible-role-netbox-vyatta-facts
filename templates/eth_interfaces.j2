@@ -1,0 +1,21 @@
+{% for iface in hardware_interfaces %}
+{% set child_ifaces = vif_interfaces | selectattr('parent.id', 'equalto', iface.id) %}
+{% set ip = all_ip_addresses | selectattr('assigned_object.id', 'equalto', iface.id) | first %}
+- name: {{ iface.name }}
+  description: {{ iface.description }}
+  duplex: {{ iface.duplex.value | default('auto') }}
+  speed: {{ iface.speed if iface.speed else 'auto' }}
+  mtu: {{ iface.mtu }}
+  poe: {{ iface.custom_fields.enable_passive_poe if iface.poe_mode.value | default('null') == 'pd' }}
+  address: {{ 'dhcp' if (ip.status.value | default('active')) == 'dhcp' else (ip.address | default(none)) }}
+{% if child_ifaces | length == 0 %}
+  vifs: []
+{% else %}
+  vifs:
+{% for vif in iface.tagged_vlans %}
+{% set vif_iface = child_ifaces | selectattr('untagged_vlan.vid', 'equalto', vif.vid) | first %}
+    - vid: {{ vif.vid }}
+      description: {{ vif_iface.description }}
+{% endfor %}
+{% endif %}
+{% endfor %}

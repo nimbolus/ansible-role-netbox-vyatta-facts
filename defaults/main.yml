@@ -1,0 +1,24 @@
+netbox_url: https://netbox.exmaple.com
+netbox_token: secret
+
+netbox_device_name: "{{ inventory_hostname }}"
+
+device: |-
+  {{ query('netbox.netbox.nb_lookup', 'devices', api_endpoint=netbox_url, token=netbox_token,
+            api_filter='name=' + netbox_device_name) | json_query('[].value') | first }}
+
+all_interfaces: |-
+  {{ query('netbox.netbox.nb_lookup', 'interfaces', api_endpoint=netbox_url, token=netbox_token,
+            api_filter='device_id=' + device.id | string) | json_query('[].value') }}
+
+all_ip_addresses: |-
+  {{ query('netbox.netbox.nb_lookup', 'ip-addresses', api_endpoint=netbox_url, token=netbox_token,
+            api_filter='device_id=' + device.id | string) | json_query('[].value') }}
+
+hardware_interfaces: "{{ all_interfaces | selectattr('type.value', 'equalto', '1000base-t') }}"
+bridge_interfaces: "{{ all_interfaces | selectattr('type.value', 'equalto', 'bridge') }}"
+vif_interfaces: "{{ all_interfaces | selectattr('parent') }}"
+bridge_port_interfaces: "{{ all_interfaces | selectattr('bridge') }}"
+
+interfaces: "{{ all_interfaces | selectattr('type.value', 'equalto', '1000base-t') }}"
+switches: "{{ all_interfaces | selectattr('type.value', 'equalto', 'bridge') }}"

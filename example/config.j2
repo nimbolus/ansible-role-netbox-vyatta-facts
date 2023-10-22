@@ -1,0 +1,112 @@
+interfaces {
+{% for iface in eth_interfaces %}
+    ethernet {{ iface.name }} {
+        description "{{ iface.description }}"
+        duplex {{ iface.duplex }}
+        speed {{ iface.speed }}
+{% if iface.mtu %}
+        mtu {{ iface.mtu }}
+{% endif %}
+{% if iface.address %}
+        address {{ iface.address }}
+{% endif %}
+{% if iface.poe %}
+        poe {
+            output {{ 'on' if iface.poe else 'off' }}
+        }
+{% endif %}
+{% for vif in iface.vifs %}
+        vif {{ vif.vid }} {
+            description "{{ vif.description }}"
+        }
+{% endfor %}
+    }
+{% endfor %}
+    loopback lo {
+    }
+{% for sw in switches %}
+    switch {{ sw.name }} {
+        description "{{ sw.description }}"
+        mtu {{ sw.mtu }}
+        switch-port {
+            vlan-aware enable
+{% for port in sw.ports %}
+            interface {{ port.name }} {
+                vlan {
+{% if port.untagged_vlan %}
+                    pvid {{ port.untagged_vlan.vid }}
+{% endif %}
+{% for vlan in port.tagged_vlans %}
+                    vid {{ vlan.vid }}
+{% endfor %}
+                }
+            }
+{% endfor %}
+        }
+{% for vif in sw.vifs %}
+        vif {{ vif.vid }} {
+            description "{{ vif.description }}"
+            address {{ vif.address }}
+            mtu {{ vif.mtu }}
+        }
+{% endfor %}
+    }
+{% endfor %}
+}
+service {
+    gui {
+        http-port 80
+        https-port 443
+        older-ciphers disable
+    }
+    ssh {
+        port 22
+        protocol-version v2
+    }
+    ubnt-discover {
+        disable
+    }
+    unms {
+        disable
+    }
+}
+system {
+    analytics-handler {
+        send-analytics-report false
+    }
+    crash-handler {
+        send-crash-report false
+    }
+    host-name EdgeRouter-Lite-3
+    login {
+        user ubnt {
+            authentication {
+                encrypted-password $5$p/tc3vFcmfdqYsam$ERLSdeM0zGPDbA/iyQ9TTO/tdoFUq8wqwpoA4Hskln2
+                plaintext-password ""
+            }
+            full-name ""
+            level admin
+        }
+    }
+    ntp {
+        server 0.ubnt.pool.ntp.org {
+        }
+        server 1.ubnt.pool.ntp.org {
+        }
+        server 2.ubnt.pool.ntp.org {
+        }
+        server 3.ubnt.pool.ntp.org {
+        }
+    }
+    syslog {
+        global {
+            facility all {
+                level notice
+            }
+            facility protocols {
+                level debug
+            }
+        }
+    }
+    time-zone UTC
+}

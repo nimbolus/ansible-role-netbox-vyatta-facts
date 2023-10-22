@@ -1,0 +1,29 @@
+{% for sw in bridge_interfaces %}
+{% set ports = bridge_port_interfaces | selectattr('bridge.id', 'equalto', sw.id) %}
+{% set vifs = vif_interfaces | selectattr('parent.id', 'equalto', sw.id) %}
+- name: {{ sw.name }}
+  description: {{ sw.description }}
+  mtu: {{ sw.mtu }}
+{% if ports | length == 0 %}
+  ports: []
+{% else %}
+  ports:
+{% for port in ports %}
+    - name: {{ port.name }}
+      untagged_vlan: {{ port.untagged_vlan }}
+      tagged_vlans: {{ port.tagged_vlans }}
+{% endfor %}
+{% endif %}
+{% if vifs | length == 0 %}
+  vifs: []
+{% else %}
+  vifs:
+{% for vif in vifs %}
+{% set ip = all_ip_addresses | selectattr('assigned_object.id', 'equalto', vif.id) | first %}
+    - vid: {{ vif.untagged_vlan.vid }}
+      description: {{ vif.description }}
+      address: {{ ip.address }}
+      mtu: {{ vif.mtu }}
+{% endfor %}
+{% endif %}
+{% endfor %}

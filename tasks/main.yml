@@ -1,0 +1,4 @@
+- name: Gather vyatta facts
+  ansible.builtin.set_fact:
+    eth_interfaces: "{{ lookup('template', 'eth_interfaces.j2') | from_yaml }}"
+    switches: "{{ lookup('template', 'switches.j2') | from_yaml }}"
