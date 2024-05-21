@@ -1,21 +1,29 @@
 {% for iface in hardware_interfaces %}
 {% set child_ifaces = vif_interfaces | selectattr('parent.id', 'equalto', iface.id) %}
-{% set ip = all_ip_addresses | selectattr('assigned_object.id', 'equalto', iface.id) | first %}
+{% set ips = all_ip_addresses | selectattr('assigned_object.id', 'equalto', iface.id) %}
 - name: {{ iface.name }}
   description: {{ iface.description }}
   duplex: {{ iface.duplex.value | default('auto') }}
   speed: {{ iface.speed if iface.speed else 'auto' }}
   mtu: {{ iface.mtu }}
   poe: {{ iface.custom_fields.enable_passive_poe if iface.poe_mode.value | default('null') == 'pd' }}
-  address: {{ 'dhcp' if (ip.status.value | default('active')) == 'dhcp' else (ip.address | default(none)) }}
+  firewall_name: {{ iface.custom_fields.firewall_name | default('null') }}
+  dhcp: {{ ips | selectattr('status.value', 'equalto', 'dhcp') | length > 0 }}
+  addresses: {{ ips | map(attribute='address') }}
+  config_template_snippet: {{ iface.custom_fields.config_template_snippet | default('null') }}
 {% if child_ifaces | length == 0 %}
   vifs: []
 {% else %}
   vifs:
 {% for vif in iface.tagged_vlans %}
 {% set vif_iface = child_ifaces | selectattr('untagged_vlan.vid', 'equalto', vif.vid) | first %}
+{% set vif_ips = all_ip_addresses | selectattr('assigned_object.id', 'equalto', vif_iface.id) %}
     - vid: {{ vif.vid }}
       description: {{ vif_iface.description }}
+      firewall_name: {{ iface.custom_fields.firewall_name | default('null') }}
+      dhcp: {{ vif_ips | selectattr('status.value', 'equalto', 'dhcp') | length > 0 }}
+      addresses: {{ vif_ips | map(attribute='address') }}
+      config_template_snippet: {{ vif_iface.custom_fields.config_template_snippet | default('null') }}
 {% endfor %}
 {% endif %}
 {% endfor %}

@@ -19,11 +19,14 @@
 {% else %}
   vifs:
 {% for vif in vifs %}
-{% set ip = all_ip_addresses | selectattr('assigned_object.id', 'equalto', vif.id) | first %}
+{% set ips = all_ip_addresses | selectattr('assigned_object.id', 'equalto', vif.id) %}
     - vid: {{ vif.untagged_vlan.vid }}
       description: {{ vif.description }}
-      address: {{ ip.address }}
+      dhcp: {{ ips | selectattr('status.value', 'equalto', 'dhcp') | length > 0 }}
+      addresses: {{ ips | map(attribute='address') }}
       mtu: {{ vif.mtu }}
+      firewall_name: {{ vif.custom_fields.firewall_name | default('null') }}
+      dhcpv6_pd_prefix_id: {{ vif.custom_fields.dhcpv6_pd_prefix_id | default('null') }}
 {% endfor %}
 {% endif %}
 {% endfor %}
